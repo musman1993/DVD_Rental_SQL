@@ -1,8 +1,7 @@
-SELECT 
-first_name, 
-last_name FROM actor
-ORDER BY last_name ASC
-;
+-- SELECT 
+-- first_name, 
+-- last_name FROM actor
+-- ORDER BY last_name ASC;
 
 -- Inventory Check: Find all films that have a rental_rate greater than 4.99 and a rating of 'G'.
 
@@ -11,8 +10,8 @@ ORDER BY last_name ASC
 
 -- Goal: Find the email addresses of the first 50 customers in the database (ordered by customer_id).
 
--- SELECT email FROM customer
--- ORDER BY customer_id LIMIT 50;
+SELECT email FROM customer
+ORDER BY customer_id LIMIT 50;
 
 -- Goal: List all unique rating types available in the film table.
 
