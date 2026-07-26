@@ -13,11 +13,11 @@ from utils.db_pipeline import (
 )
 from utils.ui_theme import apply_custom_bi_theme, apply_plotly_bi_theme
 
-st.set_page_config(page_title="Supervised Machine Learning Engine", page_icon="🤖", layout="wide")
+st.set_page_config(page_title="Machine Learning Engine", page_icon="🤖", layout="wide")
 apply_custom_bi_theme()
 
-st.title("🤖 Supervised Machine Learning Suite")
-st.markdown("Enterprise supervised predictive models for **Customer Churn Risk**, **Overdue Return Probability**, and **Film Demand Regression**.")
+st.title("🤖 Machine Learning Suite")
+st.markdown("Enterprise  predictive models for **Customer Churn Risk**, **Overdue Return Probability**, and **Film Demand Regression**.")
 
 df_rfm = load_marketing_customer_rfm()
 df_ops = load_operations_turnaround_data()
@@ -30,10 +30,10 @@ tab1, tab2, tab3 = st.tabs([
 ])
 
 # ==========================================
-# TAB 1: SUPERVISED CUSTOMER CHURN CLASSIFIER
+# TAB 1:  CUSTOMER CHURN CLASSIFIER
 # ==========================================
 with tab1:
-    st.header("🎯 Supervised Customer Churn Risk Model")
+    st.header("🎯 Customer Churn Risk Model")
     st.markdown("Predicts customer churn / inactivity risk using a **Random Forest Classifier** trained on customer rental frequency and spend metrics.")
 
     model_churn, acc_c, prec_c, rec_c, auc_c, cm_c, feats_c = train_customer_churn_classifier(df_rfm)
@@ -84,7 +84,7 @@ with tab1:
 # TAB 2: OVERDUE RETURN RISK CLASSIFIER
 # ==========================================
 with tab2:
-    st.header("⏰ Supervised Overdue Return Risk Model")
+    st.header("⏰ Overdue Return Risk Model")
     st.markdown("Predicts rental delay risk using a **Gradient Boosting Classifier** on transaction and film attributes.")
 
     model_overdue, acc_o, prec_o, rec_o, auc_o, feats_o = train_overdue_risk_classifier(df_ops)
@@ -137,14 +137,14 @@ with tab2:
 # TAB 3: FILM DEMAND REGRESSOR
 # ==========================================
 with tab3:
-    st.header("📈 Supervised Film Demand Regressor")
+    st.header("📈  Film Demand Regressor")
     st.markdown("Forecast lifetime rental volume for new catalog entries using a **Random Forest Regressor**.")
 
     model_reg, r2_r, mse_r, feats_r = train_demand_model(df_catalog)
 
     if model_reg is not None:
         col1, col2, col3 = st.columns(3)
-        col1.metric("Model Algorithm", "Random Forest Regressor")
+        col1.metric("Model Algorithm", "Random Forest")
         col2.metric("R² Score", f"{r2_r:.3f}")
         col3.metric("MSE Metric", f"{mse_r:.2f}")
 

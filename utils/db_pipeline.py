@@ -4,12 +4,15 @@ import numpy as np
 import polars as pl
 import pandas as pd
 import streamlit as st
+from dotenv import load_dotenv
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     mean_squared_error, r2_score, accuracy_score, precision_score, recall_score, roc_auc_score, confusion_matrix
 )
+
+load_dotenv()
 
 
 def get_env_db_conn_string() -> str:
@@ -19,7 +22,11 @@ def get_env_db_conn_string() -> str:
     user = os.environ.get("POSTGRES_USER", "postgres")
     password = os.environ.get("POSTGRES_PASSWORD", "postgres")
     dbname = os.environ.get("POSTGRES_DB", "dvdrental")
-    return f"dbname={dbname} user={user} password={password} host={host} port={port}"
+    sslmode = os.environ.get("POSTGRES_SSLMODE")
+    conn_str = f"dbname={dbname} user={user} password={password} host={host} port={port}"
+    if sslmode:
+        conn_str += f" sslmode={sslmode}"
+    return conn_str
 
 
 @st.cache_resource

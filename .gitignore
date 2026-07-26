@@ -223,6 +223,6 @@ __marimo__/
 .DS_Store
 
 .sql
-
+.env
 .agents
 .vscode

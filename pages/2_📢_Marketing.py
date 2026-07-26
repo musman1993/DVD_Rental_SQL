@@ -37,6 +37,7 @@ st.divider()
 st.subheader("👑 VIP Customer Revenue Pareto Analysis")
 
 df_pd = df_rfm.to_pandas()
+df_pd["total_spend"] = df_pd["total_spend"].astype(float)
 df_pd["cumulative_spend"] = df_pd["total_spend"].cumsum()
 df_pd["cum_pct"] = (df_pd["cumulative_spend"] / total_revenue) * 100
 
