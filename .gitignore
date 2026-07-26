@@ -118,6 +118,7 @@ ipython_config.py
 .pdm-python
 .pdm-build/
 
+
 # pixi
 #   Similar to Pipfile.lock, it is generally recommended to include pixi.lock in version control.
 # pixi.lock
@@ -222,3 +223,6 @@ __marimo__/
 .DS_Store
 
 .sql
+
+.agents
+.vscode

@@ -1,140 +1,128 @@
-import duckdb
-import polars as pl
-import plotly.express as px
 import streamlit as st
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error, r2_score
-
-# ==========================================
-# PAGE CONFIGURATION
-# ==========================================
-st.set_page_config(page_title="DVD Rental Intelligence", layout="wide")
-st.title("🎬 DVD Rental Intelligence & Prediction Engine")
-
-# ==========================================
-# PHASE 1: DATA EXTRACTION & CLEANING (ETL)
-# ==========================================
-@st.cache_resource
-def get_db_connection():
-    con = duckdb.connect()
-    con.execute("INSTALL postgres;")
-    con.execute("LOAD postgres;")
-    pg_conn = "dbname=dvdrental user=postgres password=postgres host=localhost port=5432"
-    con.execute(f"ATTACH '{pg_conn}' AS pg (TYPE POSTGRES);")
-    return con
-
-@st.cache_data
-def load_and_clean_data():
-    con = get_db_connection()
-    
-    # Extract: Join film, inventory, and rental tables to get total rentals per film
-    query = """
-        SELECT 
-            f.film_id,
-            f.title,
-            f.length,
-            f.rental_rate,
-            f.replacement_cost,
-            c.name AS category,
-            COUNT(r.rental_id) AS total_rentals
-        FROM pg.public.film f
-        LEFT JOIN pg.public.film_category fc ON f.film_id = fc.film_id
-        LEFT JOIN pg.public.category c ON fc.category_id = c.category_id
-        LEFT JOIN pg.public.inventory i ON f.film_id = i.film_id
-        LEFT JOIN pg.public.rental r ON i.inventory_id = r.inventory_id
-        GROUP BY f.film_id, f.title, f.length, f.rental_rate, f.replacement_cost, c.name
-    """
-    
-    # Load into Polars
-    df = con.execute(query).pl()
-    
-    # Clean: Drop rows with null values and cast types appropriately
-    df_cleaned = (
-        df.drop_nulls()
-        .with_columns([
-            pl.col("length").cast(pl.Float64),
-            pl.col("rental_rate").cast(pl.Float64),
-            pl.col("replacement_cost").cast(pl.Float64),
-            pl.col("total_rentals").cast(pl.Float64)
-        ])
-    )
-    return df_cleaned
-
-df = load_and_clean_data()
-
-# ==========================================
-# PHASE 2: EXPLORATORY DATA ANALYSIS (EDA)
-# ==========================================
-st.header("📊 Business Analytics & Visualization")
-
-col1, col2, col3 = st.columns(3)
-col1.metric("Total Catalog Size", len(df))
-col2.metric("Average Rentals per Film", round(df["total_rentals"].mean(), 1))
-col3.metric("Avg Replacement Cost", f"${df['replacement_cost'].mean():.2f}")
-
-# Visualizing Category Performance using Plotly
-category_summary = df.group_by("category").agg(
-    pl.col("total_rentals").sum().alias("sum_rentals")
-).sort("sum_rentals", descending=True)
-
-fig_bar = px.bar(
-    category_summary.to_pandas(), 
-    x="category", 
-    y="sum_rentals",
-    title="Total Rentals by Genre",
-    template="plotly_dark",
-    color="sum_rentals",
-    color_continuous_scale="Blues"
+from utils.db_pipeline import (
+    load_and_clean_catalog_data,
+    load_supply_chain_metrics,
+    load_marketing_customer_rfm,
+    load_operations_turnaround_data,
+    load_market_basket_analysis,
+    train_demand_model
 )
-st.plotly_chart(fig_bar, use_container_width=True)
+from utils.ui_theme import apply_custom_bi_theme
 
 # ==========================================
-# PHASE 3: MACHINE LEARNING & PREDICTION
+# PAGE CONFIGURATION & THEME SETUP
 # ==========================================
-st.header("🧠 Predictive Modeling: Rental Demand")
+st.set_page_config(
+    page_title="DVD Rental Intelligence Hub",
+    page_icon="🎬",
+    layout="wide"
+)
+
+apply_custom_bi_theme()
+
+st.title("⚡ DVD Rental Enterprise Intelligence & ML Portal")
 st.markdown("""
-We will train a **Random Forest Regressor** to predict how many times a film will be rented based on its metadata.
-""")
-
-# Prepare Features (X) and Target (y)
-features = ["length", "rental_rate", "replacement_cost"]
-target = "total_rentals"
-
-X = df.select(features).to_numpy()
-y = df.select(target).to_numpy().ravel()
-
-# Train/Test Split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-# Train the Model
-model = RandomForestRegressor(n_estimators=100, random_state=42)
-model.fit(X_train, y_train)
-
-# Model Evaluation
-predictions = model.predict(X_test)
-mse = mean_squared_error(y_test, predictions)
-r2 = r2_score(y_test, predictions)
-
-col_metric1, col_metric2 = st.columns(2)
-col_metric1.metric("Model R² Score", round(r2, 3))
-col_metric2.metric("Mean Squared Error (MSE)", round(mse, 2))
+<div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.8) 100%); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 14px; padding: 22px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    <h3 style="color: #00F2FE; margin-top: 0;">Welcome to the DVD Rental Executive Portal</h3>
+    <p style="color: #CBD5E1; font-size: 1.05rem; margin-bottom: 0;">
+        A comprehensive BI analytics & Supervised ML suite powered by <b>PostgreSQL 17</b>, <b>DuckDB</b>, <b>Polars</b>, <b>Plotly</b>, and <b>scikit-learn</b>.
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
 # ==========================================
-# PHASE 4: INTERACTIVE PREDICTION UI
+# DATA PREPARATION & GLOBAL METRICS
 # ==========================================
-st.subheader("🔮 Predict Demand for a New Film")
+df_catalog = load_and_clean_catalog_data()
+df_supply = load_supply_chain_metrics()
+df_rfm = load_marketing_customer_rfm()
+df_ops = load_operations_turnaround_data()
+rules_df, _ = load_market_basket_analysis()
+model, r2, mse, features = train_demand_model(df_catalog)
 
-with st.form("prediction_form"):
-    input_length = st.number_input("Film Length (minutes)", min_value=30, max_value=300, value=120)
-    input_rate = st.selectbox("Rental Rate ($)", [0.99, 2.99, 4.99])
-    input_cost = st.slider("Replacement Cost ($)", min_value=9.99, max_value=29.99, value=19.99)
-    
-    submitted = st.form_submit_button("Predict Total Rentals")
-    
-    if submitted:
-        # Create input array matching the feature structure
-        new_data = [[input_length, input_rate, input_cost]]
-        predicted_rentals = model.predict(new_data)[0]
-        
-        st.success(f"This film is projected to be rented **{predicted_rentals:.0f} times** over its lifecycle.")
+if df_catalog.is_empty():
+    st.warning("⚠️ Database offline or empty data. Please check container status (`make up`).")
+    st.stop()
+
+# ==========================================
+# EXECUTIVE DASHBOARD KPI STRIP
+# ==========================================
+col1, col2, col3, col4, col5 = st.columns(5)
+total_catalog = len(df_catalog)
+total_asset_val = float(df_supply["total_capital_tied_up"].sum()) if not df_supply.is_empty() else 0.0
+total_customers = len(df_rfm) if not df_rfm.is_empty() else 0
+rules_count = len(rules_df) if not rules_df.is_empty() else 0
+overdue_count = len(df_ops.filter(df_ops["return_status"] == "Overdue Return")) if not df_ops.is_empty() else 0
+
+col1.metric("Catalog Titles", f"{total_catalog:,}")
+col2.metric("Asset Value Exposure", f"${total_asset_val:,.2f}")
+col3.metric("Active Customers", f"{total_customers:,}")
+col4.metric("Market Basket Rules", f"{rules_count:,}")
+col5.metric("Demand Model R²", f"{r2:.3f}")
+
+st.divider()
+
+# ==========================================
+# DOMAIN MODULE NAVIGATION TILES
+# ==========================================
+st.subheader("🎯 Executive & Supervised ML Intelligence Domains")
+
+col_a, col_b = st.columns(2)
+
+with col_a:
+    st.markdown("""
+    <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid #334155; border-left: 5px solid #00F2FE; border-radius: 12px; padding: 18px; margin-bottom: 18px;">
+        <h4 style="color: #00F2FE; margin: 0 0 8px 0;">📦 1. Supply Chain & Asset Control</h4>
+        <p style="color: #94A3B8; margin: 0; font-size: 0.95rem;">
+            Track inventory copies, stock availability per store, capital tied up in replacement costs, and high-risk asset matrices.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid #334155; border-left: 5px solid #7F00FF; border-radius: 12px; padding: 18px; margin-bottom: 18px;">
+        <h4 style="color: #7F00FF; margin: 0 0 8px 0;">⚙️ 3. Operations & Turnaround</h4>
+        <p style="color: #94A3B8; margin: 0; font-size: 0.95rem;">
+            Analyze peak hourly traffic heatmaps (Day × Hour), store turnaround times, return compliance ratios, and bottlenecks.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid #334155; border-left: 5px solid #00FF66; border-radius: 12px; padding: 18px; margin-bottom: 18px;">
+        <h4 style="color: #00FF66; margin: 0 0 8px 0;">🛒 5. Market Basket & Co-Rental Affinity</h4>
+        <p style="color: #94A3B8; margin: 0; font-size: 0.95rem;">
+            Discover genre co-rental rules, cross-category affinities, and association metrics (<b>Support</b>, <b>Confidence</b>, and <b>Lift</b>).
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col_b:
+    st.markdown("""
+    <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid #334155; border-left: 5px solid #FF007F; border-radius: 12px; padding: 18px; margin-bottom: 18px;">
+        <h4 style="color: #FF007F; margin: 0 0 8px 0;">📢 2. Marketing & Customer Growth</h4>
+        <p style="color: #94A3B8; margin: 0; font-size: 0.95rem;">
+            VIP customer RFM analysis, 80/20 revenue Pareto charts, genre market share, and rental price tier sensitivity breakdown.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid #334155; border-left: 5px solid #FFD700; border-radius: 12px; padding: 18px; margin-bottom: 18px;">
+        <h4 style="color: #FFD700; margin: 0 0 8px 0;">🧠 4. Predictive Demand Engine</h4>
+        <p style="color: #94A3B8; margin: 0; font-size: 0.95rem;">
+            Simulate prospective film rental demand with Random Forest Regressor models, model accuracy metrics (R²/MSE), and feature weights.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid #334155; border-left: 5px solid #38BDF8; border-radius: 12px; padding: 18px; margin-bottom: 18px;">
+        <h4 style="color: #38BDF8; margin: 0 0 8px 0;">🤖 6. Supervised Machine Learning Suite</h4>
+        <p style="color: #94A3B8; margin: 0; font-size: 0.95rem;">
+            Supervised <b>Customer Churn Classifier</b>, <b>Overdue Return Risk Model</b>, and <b>Film Demand Regressor</b> with interactive calculators.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.info("👈 Select a domain dashboard from the sidebar to launch interactive analytics.")

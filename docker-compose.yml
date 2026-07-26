@@ -1,0 +1,47 @@
+services:
+  db:
+    build:
+      context: ./postgres-setup
+      dockerfile: dockerfile
+    container_name: dvdrental-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-dvdrental}
+    ports:
+      - "${HOST_PORT:-5432}:5432"
+    volumes:
+      - dvdrental-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-dvdrental}"]
+      interval: 10s
+      timeout: 5s
+      start_period: 40s
+      retries: 3
+    networks:
+      - dvdrental-net
+
+  app:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    container_name: dvdrental-app
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-dvdrental}
+    ports:
+      - "8501:8501"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - dvdrental-net
+
+networks:
+  dvdrental-net:
+
+volumes:
+  dvdrental-volume:

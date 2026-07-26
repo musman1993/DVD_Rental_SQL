@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "reactome-database": {
+      "source": "google-deepmind/science-skills",
+      "sourceType": "github",
+      "skillPath": "skills/reactome_database/SKILL.md",
+      "computedHash": "87588c7d4a87d15476443bb01b8861402f2d252383e691228afe481330cc6dcc"
+    },
+    "uv": {
+      "source": "google-deepmind/science-skills",
+      "sourceType": "github",
+      "skillPath": "skills/uv/SKILL.md",
+      "computedHash": "e85a729e65ce929d25b45093044a838d0e587062ac2682a1a33829cf71b0f3dc"
+    },
+    "workflow-skill-creator": {
+      "source": "google-deepmind/science-skills",
+      "sourceType": "github",
+      "skillPath": "skills/workflow_skill_creator/SKILL.md",
+      "computedHash": "5288a1e5afe7e01258a38f57ca5ccb495f82b0879fc3972d1bb8b078c6e2ab80"
+    }
+  }
+}
