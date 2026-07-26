@@ -10,8 +10,8 @@
 
 -- Goal: Find the email addresses of the first 50 customers in the database (ordered by customer_id).
 
-SELECT email FROM customer
-ORDER BY customer_id LIMIT 50;
+-- SELECT email FROM customer
+-- ORDER BY customer_id LIMIT 50;
 
 -- Goal: List all unique rating types available in the film table.
 

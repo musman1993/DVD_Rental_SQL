@@ -1,0 +1,3 @@
+{
+    "dbt.dbtPythonPathOverride": "/Users/musman/Github/Postgres_DB_DVDRental/.venv/bin/python"
+}

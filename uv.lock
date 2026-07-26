@@ -346,6 +346,12 @@ wheels = [
 ]
 
 [[package]]
+name = "dbt"
+version = "2.0.0rc202"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d8/f4/e55bef1f5d325d16d81c7b322856148576722016202f33536471e79ece40/dbt-2.0.0rc202.tar.gz", hash = "sha256:525a9e44ff8c0ca4f4d780e4be3c8a778db5f49fdb514f002061cb0081660a2b", size = 2322, upload-time = "2026-07-22T15:23:47.498Z" }
+
+[[package]]
 name = "dbt-adapters"
 version = "1.24.5"
 source = { registry = "https://pypi.org/simple" }
@@ -1621,6 +1627,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "connectorx" },
+    { name = "dbt" },
     { name = "dbt-postgres" },
     { name = "duckdb" },
     { name = "duckdb-engine" },
@@ -1641,6 +1648,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "connectorx", specifier = ">=0.4.5" },
+    { name = "dbt", specifier = ">=2.0.0rc202" },
     { name = "dbt-postgres", specifier = ">=1.11.0" },
     { name = "duckdb", specifier = ">=1.5.5" },
     { name = "duckdb-engine", specifier = ">=0.17.0" },
