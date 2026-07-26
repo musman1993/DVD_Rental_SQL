@@ -16,13 +16,21 @@ load_dotenv()
 
 
 def get_env_db_conn_string() -> str:
-    """Build PostgreSQL connection string from environment variables or defaults."""
-    host = os.environ.get("POSTGRES_HOST", "localhost")
-    port = os.environ.get("POSTGRES_PORT", "5432")
-    user = os.environ.get("POSTGRES_USER", "postgres")
-    password = os.environ.get("POSTGRES_PASSWORD", "postgres")
-    dbname = os.environ.get("POSTGRES_DB", "dvdrental")
-    sslmode = os.environ.get("POSTGRES_SSLMODE")
+    """Build PostgreSQL connection string.
+
+    Prefers Streamlit secrets (`.streamlit/secrets.toml`, e.g. Neon for the
+    deployed web app) when a [postgres] table is configured there; otherwise
+    falls back to POSTGRES_* environment variables (local Docker Postgres).
+    """
+    pg_secrets = st.secrets.get("postgres", {}) if hasattr(st, "secrets") else {}
+
+    host = pg_secrets.get("host", os.environ.get("POSTGRES_HOST", "localhost"))
+    port = pg_secrets.get("port", os.environ.get("POSTGRES_PORT", "5432"))
+    user = pg_secrets.get("user", os.environ.get("POSTGRES_USER", "postgres"))
+    password = pg_secrets.get("password", os.environ.get("POSTGRES_PASSWORD", "postgres"))
+    dbname = pg_secrets.get("dbname", os.environ.get("POSTGRES_DB", "dvdrental"))
+    sslmode = pg_secrets.get("sslmode", os.environ.get("POSTGRES_SSLMODE"))
+
     conn_str = f"dbname={dbname} user={user} password={password} host={host} port={port}"
     if sslmode:
         conn_str += f" sslmode={sslmode}"
